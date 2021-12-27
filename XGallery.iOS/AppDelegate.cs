@@ -1,5 +1,11 @@
 ﻿using Foundation;
+using ReloadPreview;
+using System;
 using UIKit;
+using Xamarin.Helper.Images;
+using Xamarin.Helper.Logs;
+using Xamarin.Helper.Tools;
+using XGallery.iOS.Controllers;
 
 namespace XGallery.iOS
 {
@@ -9,6 +15,10 @@ namespace XGallery.iOS
     public class AppDelegate : UIApplicationDelegate
     {
         // class-level declarations
+        const string TAG = "XGallery App";
+
+        public static string IP = "192.168.0.108";//"172.25.96.1";//
+        public static int Port = 350;
 
         public override UIWindow Window
         {
@@ -18,13 +28,30 @@ namespace XGallery.iOS
 
         public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
         {
+            ReloadClient.GlobalInstance = new ReloadClient(IP, Port);
+            ReloadClient.GlobalInstance.Start();
+
+            var client = new MessageClientApp(IP);
+            LogHelper.DebugEvent += (message) =>
+            {
+                client.SendMessage(message + "~iOS" + $"~{DateTime.Now}" + "\n");//~为间隔
+            };
+
             // create a new window instance based on the screen size
             Window = new UIWindow(UIScreen.MainScreen.Bounds);
-            Window.RootViewController = new UIViewController();
+            var MainTabBarController = new UITabBarController();
+
+            var catalogListUIViewController = new CatalogListUIViewController() { Title = "Task" };
+            var FirstNavigationController = new UINavigationController(catalogListUIViewController);
+            FirstNavigationController.TabBarItem = new UITabBarItem("Task", SvgHelper.FromResources("ic_task_pressed.svg", 44), 0);
+
+            MainTabBarController.ViewControllers = new UINavigationController[] { FirstNavigationController};
+
+            Window.RootViewController = MainTabBarController;
 
             // make the window visible
             Window.MakeKeyAndVisible();
-
+            ReloadPreview.ViewControllerService.RecordViewController(nameof(SkiaBooleanOperationUIViewController), typeof(SkiaBooleanOperationUIViewController));
             return true;
         }
 

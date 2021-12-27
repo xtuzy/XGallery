@@ -9,5 +9,10 @@
     <Import_RootNamespace>XGallery.Share</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Models\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)ViewModels\TaskItemViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewModels\TaskPageViewModel.cs" />
   </ItemGroup>
 </Project>
