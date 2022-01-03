@@ -16,13 +16,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="HighPerfomaceCanvas\**" />
-    <EmbeddedResource Remove="HighPerfomaceCanvas\**" />
-    <None Remove="HighPerfomaceCanvas\**" />
-    <Page Remove="HighPerfomaceCanvas\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Include="..\XGallery.iOS.Inherit\Views\Layer.cs" Link="Views\Layer.cs" />
     <Compile Include="..\XGallery.iOS.Inherit\Views\LayerView_MultipleThread.cs" Link="Views\LayerView_MultipleThread.cs" />
     <Compile Include="..\XGallery.iOS.Inherit\Views\LayerView_SingleThread.cs" Link="Views\LayerView_SingleThread.cs" />
