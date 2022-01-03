@@ -14,10 +14,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Xamarin.Helper.Controllers;
+using XGallery.Views;
 
 namespace XGallery.Droid.Fragments
 {
-    public class CatalogListFragment : BaseFragment,IReload
+    public class MultipleThreadSkiaFragment : BaseFragment,IReload
     {
         public override void OnCreate(Bundle savedInstanceState)
         {
@@ -43,7 +44,7 @@ namespace XGallery.Droid.Fragments
 
         private void GlobalInstance_Reload()
         {
-            ReloadClient.GlobalInstance.ReloadType<CatalogListFragment>(this, ContentView);
+            ReloadClient.GlobalInstance.ReloadType<MultipleThreadSkiaFragment>(this, ContentView);
         }
 
         public override void OnStop()
@@ -61,20 +62,9 @@ namespace XGallery.Droid.Fragments
         {
             ContentView.RemoveAllViews();
             ContentView.SetBackgroundColor(Color.Beige);
-            var list = new LinearLayout(ContentView.Context) { Id = View.GenerateViewId(), Orientation = Orientation.Vertical };
+            var list = new LayerView(ContentView.Context) { Id = View.GenerateViewId() };
             ContentView.AddView(list, new ConstraintLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
-            Button b1 = new Button(ContentView.Context) { Text = "SkiaBooleanOperationFragment" };
-            list.AddView(b1);
-            b1.Click += (s, e) =>
-            {
-                fragment.PushViewController(ViewControllerService.NewViewController("SkiaBooleanOperationFragment") as BaseFragment);
-            };
-            Button b2 = new Button(ContentView.Context) { Text = nameof(MultipleThreadSkiaFragment) };
-            list.AddView(b2);
-            b2.Click += (s, e) =>
-            {
-                fragment.PushViewController(ViewControllerService.NewViewController(nameof(MultipleThreadSkiaFragment)) as BaseFragment);
-            };
+            
         }
     }
 }

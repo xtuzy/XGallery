@@ -45,6 +45,10 @@
     <Compile Include="TableView\ITableViewSource.cs" />
     <Compile Include="TableView\ReloadableTableViewCell.cs" />
     <Compile Include="TableView\ReloadableTableViewSource.cs" />
+    <Compile Include="Tools\FPSHelper.cs" />
+    <Compile Include="Views\Layer.cs" />
+    <Compile Include="Views\LayerView_MultipleThread.cs" />
+    <Compile Include="Views\LayerView_SingleThread.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Toolkit.Mvvm">

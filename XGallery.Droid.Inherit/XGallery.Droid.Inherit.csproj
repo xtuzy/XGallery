@@ -47,6 +47,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\XGallery.iOS.Inherit\Views\Layer.cs">
+      <Link>Views\Layer.cs</Link>
+    </Compile>
+    <Compile Include="..\XGallery.iOS.Inherit\Views\LayerView_MultipleThread.cs">
+      <Link>Views\LayerView_MultipleThread.cs</Link>
+    </Compile>
+    <Compile Include="..\XGallery.iOS.Inherit\Views\LayerView_SingleThread.cs">
+      <Link>Views\LayerView_SingleThread.cs</Link>
+    </Compile>
     <Compile Include="Class1.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

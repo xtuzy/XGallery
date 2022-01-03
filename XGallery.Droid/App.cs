@@ -24,7 +24,7 @@ namespace XGallery.Droid
     {
         const string TAG = "XGallery App";
 
-        public static string IP = "192.168.1.5";//"172.25.96.1";//
+        public static string IP = "192.168.0.108";//"172.25.96.1";//
         public static int Port = 300;
         public App(IntPtr handle, JniHandleOwnership ownerShip) : base(handle, ownerShip)
         {
@@ -46,6 +46,7 @@ namespace XGallery.Droid
             LogHelper.Debug("{0} {1}", nameof(App), nameof(OnCreate));
 
             ReloadPreview.ViewControllerService.RecordViewController(nameof(SkiaBooleanOperationFragment), typeof(SkiaBooleanOperationFragment));
+            ReloadPreview.ViewControllerService.RecordViewController(nameof(MultipleThreadSkiaFragment), typeof(MultipleThreadSkiaFragment));
            
         }
 
