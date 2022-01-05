@@ -1,12 +1,14 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-
+using System.Windows.Input;
+using Point = SkiaSharp.SKPoint;
+using Rectangle = SkiaSharp.SKRect;
+using Size = SkiaSharp.SKSize;
 namespace CanvasDemo.Canvas
 {
     public abstract class Layer
@@ -43,16 +45,16 @@ namespace CanvasDemo.Canvas
         /// 正常绘图
         /// </summary>
         /// <param name="g"></param>
-        public abstract void Drawing(Graphics g);
+        public abstract void Drawing(SKCanvas g);
 
         /// <summary>
         /// 第二次绘制，用于显示一些在前端的文字等
         /// </summary>
-        public abstract void DrawingAfter(Graphics g);
+        public abstract void DrawingAfter(SKCanvas g);
 
-        public virtual bool MouseDown(MouseEventArgs e) => false;
+        public virtual bool MouseDown(MouseButtonEventArgs e) => false;
         public virtual bool MouseMove(MouseEventArgs e) => false;
-        public virtual bool MouseUp(MouseEventArgs e) => false;
-        public virtual bool MouseWheel(MouseEventArgs e) => false;
+        public virtual bool MouseUp(MouseButtonEventArgs e) => false;
+        public virtual bool MouseWheel(MouseWheelEventArgs e) => false;
     }
 }

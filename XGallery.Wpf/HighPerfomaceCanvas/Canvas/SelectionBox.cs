@@ -1,11 +1,14 @@
-﻿using System;
+﻿using SkiaSharp;
+using SkiaSharp.Views.WPF;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-
+using System.Windows.Input;
+using Point = SkiaSharp.SKPoint;
+using Rectangle = SkiaSharp.SKRect;
+using Size = SkiaSharp.SKSize;
 namespace CanvasDemo.Canvas
 {
     public class SelectionBox : Element
@@ -29,32 +32,41 @@ namespace CanvasDemo.Canvas
             Editor = editor;
         }
 
-        public override void Drawing(Graphics g)
+        public override void Drawing(SKCanvas g)
         {
             if (SelectionBoxIsShow == true)
             {
-                if (IsLeftToRight == true)
+                using(var paint = new SKPaint())
                 {
-                    g.FillRectangle(new SolidBrush(Color.FromArgb(100, 51, 153, 255)), Viewer.LocalToShow(Rect));
-                    g.DrawRectangle(new Pen(Color.FromArgb(255, 51, 153, 255)), Viewer.LocalToShow(Rect));
+                    if (IsLeftToRight == true)
+                    {
+                        paint.Color = SKColor.Parse($"{51:X2}{153:X2}{255:X2}").WithAlpha(100);
+                        paint.Style = SKPaintStyle.Fill;
+                        g.DrawRect(Viewer.LocalToShow(Rect),paint);
+                        paint.Color = SKColor.Parse($"{51:X2}{153:X2}{255:X2}").WithAlpha(255);
+                        paint.Style = SKPaintStyle.Stroke;
+                        g.DrawRect(Viewer.LocalToShow(Rect),paint);
+                    }
+                    else
+                    {
+                        paint.Color = SKColor.Parse($"{153:X2}{255:X2}{51:X2}").WithAlpha(100);
+                        paint.Style = SKPaintStyle.Fill;
+                        g.DrawRect(Viewer.LocalToShow(Rect), paint);
+                        paint.Color = SKColor.Parse($"{153:X2}{255:X2}{51:X2}").WithAlpha(255);
+                        paint.Style = SKPaintStyle.Stroke;
+                        g.DrawRect(Viewer.LocalToShow(Rect), paint);
+                    }
                 }
-                else
-                {
-                    g.FillRectangle(new SolidBrush(Color.FromArgb(100, 153, 255, 51)), Viewer.LocalToShow(Rect));
-                    g.DrawRectangle(new Pen(Color.FromArgb(255, 153, 255, 51)), Viewer.LocalToShow(Rect));
-                }
-
             }
         }
 
-        public void MouseDown(MouseEventArgs e)
+        public void MouseDown(MouseButtonEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
+            if (e.LeftButton==MouseButtonState.Pressed)
             {
                 IsMouseLeftDown = true;
-                Start = Viewer.MousePointToLocal(e.Location);
-                Rect.Width = 0;
-                Rect.Height = 0;
+                Start = Viewer.MousePointToLocal(e.GetPosition(Canvas).ToSKPoint());
+                Rect.Size = new Size(0,0);
                 SelectionBoxIsShow = true;
             }
         }
@@ -64,29 +76,25 @@ namespace CanvasDemo.Canvas
             //比例缩放后结束坐标也要做调整
             if (IsMouseLeftDown == true)
             {
-                var end = Viewer.MousePointToLocal(e.Location);
+                var end = Viewer.MousePointToLocal(e.GetPosition(Canvas).ToSKPoint());
 
                 IsLeftToRight = Start.X < end.X;
-
-                Rect.X = Start.X < end.X ? Start.X : end.X;
-                Rect.Y = Start.Y < end.Y ? Start.Y : end.Y;
-
-                Rect.Width = Math.Abs(Start.X - end.X);
-                Rect.Height = Math.Abs(Start.Y - end.Y);
+                Rect.Location = new Point(Start.X < end.X ? Start.X : end.X, Start.Y < end.Y ? Start.Y : end.Y);
+                Rect.Size = new Size(Math.Abs(Start.X - end.X), Math.Abs(Start.Y - end.Y));
             }
         }
 
-        public void MouseUp(MouseEventArgs e)
+        public void MouseUp(MouseButtonEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
+            if (e.LeftButton == MouseButtonState.Pressed)
             {
                 IsMouseLeftDown = false;
                 SelectionBoxIsShow = false;
 
-                var end = Viewer.MousePointToLocal(e.Location);
+                var end = Viewer.MousePointToLocal(e.GetPosition(Canvas).ToSKPoint());
                 if (end.Distance(Start) < 15)
                 {//开始和结束距离短，认为是鼠标点击选择
-                    PointSelectOver(e.Location);
+                    PointSelectOver(e.GetPosition(Canvas).ToSKPoint());
                 }
                 else
                 {
@@ -96,7 +104,7 @@ namespace CanvasDemo.Canvas
             }
         }
 
-        public void MouseWheel(MouseEventArgs e)
+        public void MouseWheel(MouseWheelEventArgs e)
         {
 
         }
@@ -106,7 +114,8 @@ namespace CanvasDemo.Canvas
         /// </summary>
         private void PointSelectOver(Point mousePoint)
         {
-            if (Control.ModifierKeys != Keys.Control)
+            //if (Control.ModifierKeys != Keys.Control)
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)//https://stackoverflow.com/a/5750848/13254773
             {
                 Editor.ClearSelected();
             }
@@ -131,7 +140,8 @@ namespace CanvasDemo.Canvas
         /// </summary>
         private void BoxSelectOver()
         {
-            if (Control.ModifierKeys != Keys.Control)
+            //if (Control.ModifierKeys != Keys.Control)
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)//https://stackoverflow.com/a/5750848/13254773
             {
                 //撤销以前的选择
                 Editor.ClearSelected();
@@ -152,7 +162,7 @@ namespace CanvasDemo.Canvas
             Editor.SetCurrent(Editor.SelectedElements.FirstOrDefault());
         }
 
-        public override void DrawingAfter(Graphics g)
+        public override void DrawingAfter(SKCanvas g)
         {
         
         }

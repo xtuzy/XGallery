@@ -1,18 +1,25 @@
-﻿using System;
+﻿using SkiaSharp.Views.WPF;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-
+using System.Timers;
+using System.Windows.Input;
+using Point = SkiaSharp.SKPoint;
+using Rectangle = SkiaSharp.SKRect;
+using Size = SkiaSharp.SKSize;
 namespace CanvasDemo.Canvas
 {
     public delegate void LayerChangedEvent(Layer layer);
 
-    public class TimCanvas : PictureBox, IDisposable
+    public class TimCanvas : SKElement, IDisposable
     {
+        public void Refresh()
+        {
+            this.InvalidateVisual();
+        }
         public event LayerChangedEvent LayerChanged;
 
         /// <summary>
@@ -61,10 +68,10 @@ namespace CanvasDemo.Canvas
 
         public TimCanvas()
         {
-            SetStyle(ControlStyles.UserPaint, true);
-            SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-            SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
-            this.DoubleBuffered = true;
+            //SetStyle(ControlStyles.UserPaint, true);
+            //SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            //SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+            //this.DoubleBuffered = true;
 
             this.AllowDrop = true;
 
@@ -83,23 +90,23 @@ namespace CanvasDemo.Canvas
 
 
             //增加事件
-            this.Paint += DrawingBoard_Paint;
+            this.PaintSurface += DrawingBoard_Paint;
             this.MouseMove += DrawingBoard_MouseMove;
             this.MouseDown += Canvas_MouseDown;
             this.MouseUp += Canvas_MouseUp;
             this.MouseWheel += Canvas_MouseWheel;
-            this.MouseDoubleClick += TimCanvas_MouseDoubleClick;
+            //this.MouseDoubleClick += TimCanvas_MouseDoubleClick;
 
             //监视根窗体的激活状态
-            var rootForm = FindForm();
+            var rootForm = System.Windows.Application.Current.MainWindow;// FindForm();
             rootForm.Activated += (s, e) => IsRootFormActivated = true;
-            rootForm.Deactivate += (s, e) => IsRootFormActivated = false;
+            rootForm.Deactivated += (s, e) => IsRootFormActivated = false;
         }
 
 
         #region 鼠标事件调用
 
-        private void Canvas_MouseDown(object sender, MouseEventArgs e)
+        private void Canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             this.Focus();
             var l = CurrentLayer?.MouseDown(e);
@@ -108,10 +115,10 @@ namespace CanvasDemo.Canvas
                 Viewer.MouseDown(e);
                 ElementEditor.MouseDown(e);
             }
-            this.Refresh();
+            this.InvalidateVisual();// Refresh();
         }
 
-        private void Canvas_MouseUp(object sender, MouseEventArgs e)
+        private void Canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
             var l = CurrentLayer?.MouseUp(e);
             if (l != true)//优先处理图层的鼠标操作，有些操作需要屏蔽
@@ -119,32 +126,34 @@ namespace CanvasDemo.Canvas
                 Viewer.MouseUp(e);
                 ElementEditor.MouseUp(e);
             }
-            this.Refresh();
+            this.InvalidateVisual(); //Refresh();
         }
 
 
         private void DrawingBoard_MouseMove(object sender, MouseEventArgs e)
         {
+            MousePosition = e.GetPosition(this).ToSKPoint();
+
             var l = CurrentLayer?.MouseMove(e);
             if (l != true)//优先处理图层的鼠标操作，有些操作需要屏蔽
             {
                 Viewer.MouseMove(e);
                 ElementEditor.MouseMove(e);
             }
-            if (e.Button != MouseButtons.None)
+            if (e.LeftButton == MouseButtonState.Pressed||e.RightButton == MouseButtonState.Pressed)
             {//TODO: 增加了刷新条件，尝试减少刷新来优化系统性
-                this.Refresh();
+                this.InvalidateVisual();
             }
         }
 
-        private void Canvas_MouseWheel(object sender, MouseEventArgs e)
+        private void Canvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             var l = CurrentLayer?.MouseWheel(e);
             if (l != true)//优先处理图层的鼠标操作，有些操作需要屏蔽
             {
                 Viewer.MouseWheel(e);
             }
-            this.Refresh();
+            this.InvalidateVisual();
         }
 
         private void TimCanvas_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -155,44 +164,44 @@ namespace CanvasDemo.Canvas
         #endregion
 
         #region  绘图
-
+        Point MousePosition;
         /// <summary>
         /// 绘制画布
         /// </summary>
-        private void DrawingBoard_Paint(object sender, PaintEventArgs e)
+        private void DrawingBoard_Paint(object? sender, SkiaSharp.Views.Desktop.SKPaintSurfaceEventArgs e)
         {
 
-            Backgrounder.Drawing(e.Graphics);
+            Backgrounder.Drawing(e.Surface.Canvas);
 
             //绘制各图层信息-正常内容
             foreach (var item in Layers)
             {
-                if (item.IsVisible == true) item.Drawing(e.Graphics);
+                if (item.IsVisible == true) item.Drawing(e.Surface.Canvas);
             }
 
             //绘制各图层信息-顶部内容
             foreach (var item in Layers)
             {
-                if (item.IsVisible == true) item.DrawingAfter(e.Graphics);
+                if (item.IsVisible == true) item.DrawingAfter(e.Surface.Canvas);
             }
 
             if (FocusElement != null && FocusElement.IsShow == true)
-                FocusElement.Drawing(e.Graphics);
+                FocusElement.Drawing(e.Surface.Canvas);
 
 
             //绘制选择框
-            ElementEditor.Drawing(e.Graphics);
+            ElementEditor.Drawing(e.Surface.Canvas);
 
 
             //绘制拖拽对象
             if (DragElement != null)
             {
-                DragElement.Rect.Location = Viewer.MousePointToLocal(this.PointToClient(MousePosition));
-                DragElement?.Drawing(e.Graphics);
+                DragElement.Rect.Location = Viewer.MousePointToLocal(MousePosition);//?
+                DragElement?.Drawing(e.Surface.Canvas);
             }
 
 
-            ToolTip?.Drawing(e.Graphics);
+            ToolTip?.Drawing(e.Surface.Canvas);
         }
 
         #endregion
@@ -235,13 +244,13 @@ namespace CanvasDemo.Canvas
         {
             if (elem == null) return;
 
-            var x = (int)(-1 * (elem.Rect.X + elem.Rect.Width / 2 - Viewer.Viewport.Width / 2) * Viewer.Zoom);
-            var y = (int)(-1 * (elem.Rect.Y + elem.Rect.Height / 2 - Viewer.Viewport.Height / 2) * Viewer.Zoom);
+            var x = (int)(-1 * (elem.Rect.Left + elem.Rect.Width / 2 - Viewer.Viewport.Width / 2) * Viewer.Zoom);
+            var y = (int)(-1 * (elem.Rect.Top + elem.Rect.Height / 2 - Viewer.Viewport.Height / 2) * Viewer.Zoom);
             Viewer.SetZero(x, y);
             if (FocusElement == null)
                 FocusElement = new Canvas.FocusElement(this);
 
-            FocusElement.SetFocus(new Point(elem.Rect.X + elem.Rect.Width / 2, elem.Rect.Y + elem.Rect.Height / 2));
+            FocusElement.SetFocus(new Point(elem.Rect.Left + elem.Rect.Width / 2, elem.Rect.Top + elem.Rect.Height / 2));
             FocusElement.IsShow = true;
         }
 
@@ -374,7 +383,8 @@ namespace CanvasDemo.Canvas
         {
             ToolTipTimer = new Timer();
             ToolTipTimer.Interval = 400;
-            ToolTipTimer.Tick += ToolTipTimer_Tick;
+            //ToolTipTimer.Tick += ToolTipTimer_Tick;
+            ToolTipTimer.Elapsed += ToolTipTimer_Tick;
             ToolTipTimer.Start();
         }
 
@@ -385,7 +395,7 @@ namespace CanvasDemo.Canvas
             if (ToolTipMousePosition == MousePosition)
             {
                 //只有继承了提示接口的才能用于提示
-                var objElement = GetVisibleElement(this.PointToClient(ToolTipMousePosition)) as IToolTipElement;
+                var objElement = GetVisibleElement(ToolTipMousePosition) as IToolTipElement;
                 if (objElement == null) return;
                 ToolTip.Show(objElement);
             }
@@ -398,7 +408,8 @@ namespace CanvasDemo.Canvas
 
         #endregion
 
-        protected override void Dispose(bool disposing)
+       
+        /*protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
 
@@ -413,8 +424,22 @@ namespace CanvasDemo.Canvas
 
             ToolTipTimer?.Stop();
             ToolTipTimer?.Dispose();
-        }
+        }*/
 
+        public void Dispose()
+        {
+            ElementEditor?.SelectedElements?.Clear();
+
+            Layers?.ForEach(x =>
+            {
+                x.Elements.Clear();
+            });
+
+            Layers?.Clear();
+
+            ToolTipTimer?.Stop();
+            ToolTipTimer?.Dispose();
+        }
     }
 
 }

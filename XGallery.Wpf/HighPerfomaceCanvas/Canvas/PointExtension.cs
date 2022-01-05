@@ -1,10 +1,12 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Point = SkiaSharp.SKPoint;
+using Rectangle = SkiaSharp.SKRect;
+using Size = SkiaSharp.SKSize;
 namespace CanvasDemo.Canvas
 {
     public static class PointExtension
@@ -46,16 +48,17 @@ namespace CanvasDemo.Canvas
         /// </summary>
         public static bool IsInZone(this Point point, Point[] points)
         {
-            System.Drawing.Drawing2D.GraphicsPath myGraphicsPath = new System.Drawing.Drawing2D.GraphicsPath();
-            myGraphicsPath.Reset();
+            SKPath mySKCanvasPath = new SKPath();
+            mySKCanvasPath.Reset();
             //添家多边形点，绘制出路径 
-            myGraphicsPath.AddPolygon(points);
-            Region myRegion = new Region();
-            myRegion.MakeEmpty();
+            mySKCanvasPath.AddPoly(points);
+            SKRegion myRegion = new SKRegion();
+            myRegion.SetEmpty();
             //获得交集
-            myRegion.Union(myGraphicsPath);
+            myRegion.Op(mySKCanvasPath,SKRegionOperation.Union);
             //返回判断点是否在多边形里
-            return myRegion.IsVisible(point);
+            //return myRegion.IsVisible(point);
+            return myRegion.Contains((int)point.X, (int)point.Y);
         }
 
     }

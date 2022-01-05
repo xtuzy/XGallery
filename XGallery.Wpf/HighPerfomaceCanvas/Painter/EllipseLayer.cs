@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Drawing;
+
 using CanvasDemo.Canvas;
+using SkiaSharp;
 
 namespace CanvasDemo.Painter
 {
@@ -15,7 +16,7 @@ namespace CanvasDemo.Painter
             IsInteractionLayer = true;
         }
 
-        public override void Drawing(Graphics g)
+        public override void Drawing(SKCanvas g)
         {
             foreach (var item in Elements)
             {
@@ -24,7 +25,7 @@ namespace CanvasDemo.Painter
             }
         }
 
-        public override void DrawingAfter(Graphics g)
+        public override void DrawingAfter(SKCanvas g)
         {
      
         }

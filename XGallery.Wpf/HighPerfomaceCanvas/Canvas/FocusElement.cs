@@ -1,10 +1,13 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
+
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Point = SkiaSharp.SKPoint;
+using Rectangle = SkiaSharp.SKRect;
+using Size = SkiaSharp.SKSize;
 namespace CanvasDemo.Canvas
 {
     /// <summary>
@@ -34,15 +37,18 @@ namespace CanvasDemo.Canvas
         {
         }
 
-        public override void Drawing(Graphics g)
+        public override void Drawing(SKCanvas g)
         {
             var focus = this.Canvas.Viewer.LocalToShow(Focus);
-
-            g.DrawLine(Pens.Black, new Point(focus.X, 0), new Point(focus.X, this.Canvas.Height));
-            g.DrawLine(Pens.Black, new Point(0, focus.Y), new Point(this.Canvas.Width, focus.Y));
+            using(var paint = new SKPaint() { Color = SKColors.Black })
+            {
+                g.DrawLine(new Point(focus.X, 0), new Point(focus.X, (float)this.Canvas.Height),paint);
+                g.DrawLine( new Point(0, focus.Y), new Point((float)this.Canvas.Width, focus.Y),paint);
+            }
+            
         }
 
-        public override void DrawingAfter(Graphics g)
+        public override void DrawingAfter(SKCanvas g)
         {
           
         }

@@ -1,11 +1,16 @@
-﻿using System;
+﻿using SkiaSharp;
+using SkiaSharp.Views.WPF;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
+
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-
+using System.Windows;
+using System.Windows.Input;
+using Point = SkiaSharp.SKPoint;
+using Rectangle = SkiaSharp.SKRect;
+using Size = SkiaSharp.SKSize;
 namespace CanvasDemo.Canvas
 {
     /// <summary>
@@ -21,7 +26,7 @@ namespace CanvasDemo.Canvas
 
         }
 
-        public override void Drawing(Graphics g)
+        public override void Drawing(SKCanvas g)
         {
             //绘制选择对象的拖动柄
             SelectedElements.ForEach(x => x.DrawingJoystick(g));
@@ -35,11 +40,13 @@ namespace CanvasDemo.Canvas
         //拖动柄状态
         private TransformState TState = TransformState.None;
 
-        public void MouseDown(MouseEventArgs e)
+        public void MouseDown(MouseButtonEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
+            //if (e.Button == MouseButtons.Left)
+            if (e.LeftButton == MouseButtonState.Pressed)
             {
-                MPoint = Viewer.MousePointToLocal(e.Location);
+                //MPoint = Viewer.MousePointToLocal(e.Location);
+                MPoint = Viewer.MousePointToLocal(e.GetPosition(e.Source as FrameworkElement).ToSKPoint());
                 var elem = SelectedElements.FirstOrDefault(x => x.Rect.Contains(MPoint) == true);
                 if (elem != null)
                 {//点击已经选择的对象
@@ -52,12 +59,12 @@ namespace CanvasDemo.Canvas
                             EState = EditorState.Transform;
                             TState = TransformState.RightBottom;
                         }
-                        else if (MPoint.X > elem.Rect.Right - elem.JoystickSize && MPoint.Y > elem.Rect.Y + elem.Rect.Height / 2 - elem.JoystickSize / 2 && MPoint.X < elem.Rect.Right && MPoint.Y < elem.Rect.Y + elem.Rect.Height / 2 + elem.JoystickSize / 2)
+                        else if (MPoint.X > elem.Rect.Right - elem.JoystickSize && MPoint.Y > elem.Rect.Top + elem.Rect.Height / 2 - elem.JoystickSize / 2 && MPoint.X < elem.Rect.Right && MPoint.Y < elem.Rect.Top + elem.Rect.Height / 2 + elem.JoystickSize / 2)
                         {
                             EState = EditorState.Transform;
                             TState = TransformState.Right;
                         }
-                        else if (MPoint.X > elem.Rect.X + elem.Rect.Width / 2 - elem.JoystickSize / 2 && MPoint.Y > elem.Rect.Bottom - elem.JoystickSize && MPoint.X < elem.Rect.X + elem.Rect.Width / 2 + elem.JoystickSize / 2 && MPoint.Y < elem.Rect.Bottom)
+                        else if (MPoint.X > elem.Rect.Left + elem.Rect.Width / 2 - elem.JoystickSize / 2 && MPoint.Y > elem.Rect.Bottom - elem.JoystickSize && MPoint.X < elem.Rect.Left + elem.Rect.Width / 2 + elem.JoystickSize / 2 && MPoint.Y < elem.Rect.Bottom)
                         {
                             EState = EditorState.Transform;
                             TState = TransformState.Bottom;
@@ -81,7 +88,7 @@ namespace CanvasDemo.Canvas
         {
             if (EState == EditorState.Move)
             {//移动模式，设定对象位置
-                var end = Viewer.MousePointToLocal(e.Location);
+                var end = Viewer.MousePointToLocal(e.GetPosition(e.Source as FrameworkElement).ToSKPoint());
                 var x = (end.X - MPoint.X);
                 var y = (end.Y - MPoint.Y);
 
@@ -90,7 +97,7 @@ namespace CanvasDemo.Canvas
             }
             else if (EState == EditorState.Transform)
             {//调整大小
-                var end = Viewer.MousePointToLocal(e.Location);
+                var end = Viewer.MousePointToLocal(e.GetPosition(e.Source as FrameworkElement).ToSKPoint());
                 var x = (end.X - MPoint.X);
                 var y = (end.Y - MPoint.Y);
 
@@ -99,19 +106,18 @@ namespace CanvasDemo.Canvas
                     switch (TState)
                     {
                         case TransformState.RightBottom:
-                            elem.Rect.Width += x;
-                            elem.Rect.Height += y;
+                            elem.Rect.Size = new Size(elem.Rect.Width + x, elem.Rect.Height + y);
                             break;
                         case TransformState.Right:
-                            elem.Rect.Width += x;
+                            elem.Rect.Size = new Size(elem.Rect.Width + x, elem.Rect.Height);
                             break;
                         case TransformState.Bottom:
-                            elem.Rect.Height += y;
+                            elem.Rect.Size = new Size(elem.Rect.Width,elem.Rect.Height + y);
                             break;
                     }
 
-                    if (elem.Rect.Width < 10) elem.Rect.Width = 10;
-                    if (elem.Rect.Height < 10) elem.Rect.Height = 10;
+                    if (elem.Rect.Width < 10) elem.Rect.Size = new Size(10, elem.Rect.Height);
+                    if (elem.Rect.Height < 10) elem.Rect.Size = new Size(elem.Rect.Width, 10);
                 });
 
                 MPoint = end;
@@ -123,7 +129,7 @@ namespace CanvasDemo.Canvas
             }
         }
 
-        public void MouseUp(MouseEventArgs e)
+        public void MouseUp(MouseButtonEventArgs e)
         {
             if (EState == EditorState.Selection)
             {
@@ -133,7 +139,7 @@ namespace CanvasDemo.Canvas
             EState = EditorState.None;
         }
 
-        public void MouseWheel(MouseEventArgs e)
+        public void MouseWheel(MouseWheelEventArgs e)
         {
 
         }
@@ -229,7 +235,7 @@ namespace CanvasDemo.Canvas
 
             foreach (var item in SelectedElements)
             {
-                item.Rect.X = CurrentElement.Rect.X;
+                item.Rect.Left = CurrentElement.Rect.Left;
             }
             Canvas.Refresh();
         }
@@ -243,7 +249,7 @@ namespace CanvasDemo.Canvas
 
             foreach (var item in SelectedElements)
             {
-                item.Rect.X = CurrentElement.Rect.Right - item.Rect.Width;
+                item.Rect.Left = CurrentElement.Rect.Right - item.Rect.Width;
             };
             Canvas.Refresh();
         }
@@ -257,7 +263,7 @@ namespace CanvasDemo.Canvas
 
             foreach (var item in SelectedElements)
             {
-                item.Rect.Y = CurrentElement.Rect.Y;
+                item.Rect.Top = CurrentElement.Rect.Top;
             };
             Canvas.Refresh();
         }
@@ -271,7 +277,7 @@ namespace CanvasDemo.Canvas
 
             foreach (var item in SelectedElements)
             {
-                item.Rect.Y = CurrentElement.Rect.Bottom - item.Rect.Height;
+                item.Rect.Top = CurrentElement.Rect.Bottom - item.Rect.Height;
             };
             Canvas.Refresh();
         }
@@ -283,11 +289,11 @@ namespace CanvasDemo.Canvas
         {
             if (SelectedElements.Count <= 1) return;
 
-            var center = CurrentElement.Rect.X + CurrentElement.Rect.Width / 2;
+            var center = CurrentElement.Rect.Left + CurrentElement.Rect.Width / 2;
 
             foreach (var item in SelectedElements)
             {
-                item.Rect.X = center - item.Rect.Width / 2;
+                item.Rect.Left = center - item.Rect.Width / 2;
             };
             Canvas.Refresh();
         }
@@ -299,11 +305,11 @@ namespace CanvasDemo.Canvas
         {
             if (SelectedElements.Count <= 1) return;
 
-            var middle = CurrentElement.Rect.Y + CurrentElement.Rect.Height / 2;
+            var middle = CurrentElement.Rect.Top + CurrentElement.Rect.Height / 2;
 
             foreach (var item in SelectedElements)
             {
-                item.Rect.Y = middle - item.Rect.Height / 2;
+                item.Rect.Top = middle - item.Rect.Height / 2;
             };
             Canvas.Refresh();
         }
@@ -317,7 +323,7 @@ namespace CanvasDemo.Canvas
 
             foreach (var item in SelectedElements)
             {
-                item.Rect.Width = CurrentElement.Rect.Width;
+                item.Rect.Size= new Size( CurrentElement.Rect.Width,item.Rect.Height);
             };
             Canvas.Refresh();
         }
@@ -331,7 +337,7 @@ namespace CanvasDemo.Canvas
 
             foreach (var item in SelectedElements)
             {
-                item.Rect.Height = CurrentElement.Rect.Height;
+                item.Rect.Size = new Size(item.Rect.Width, CurrentElement.Rect.Height);
             };
             Canvas.Refresh();
         }
@@ -345,8 +351,7 @@ namespace CanvasDemo.Canvas
 
             foreach (var item in SelectedElements)
             {
-                item.Rect.Width = CurrentElement.Rect.Width;
-                item.Rect.Height = CurrentElement.Rect.Height;
+                item.Rect.Size = new Size(CurrentElement.Rect.Width, CurrentElement.Rect.Height);
             };
             Canvas.Refresh();
         }
@@ -358,14 +363,14 @@ namespace CanvasDemo.Canvas
         {
             if (SelectedElements.Count <= 1) return;
 
-            var orderFans = SelectedElements.OrderBy(x => x.Rect.X).ToList();
-            var minLeft = orderFans.First().Rect.X;
-            var maxLeft = orderFans.Last().Rect.X;
+            var orderFans = SelectedElements.OrderBy(x => x.Rect.Left).ToList();
+            var minLeft = orderFans.First().Rect.Left;
+            var maxLeft = orderFans.Last().Rect.Left;
             var distance = maxLeft - minLeft;
 
             for (int i = 0; i < orderFans.Count; i++)
             {
-                orderFans[i].Rect.X = (int)(minLeft + (float)i / ((float)orderFans.Count - 1.0f) * distance);
+                orderFans[i].Rect.Left = (int)(minLeft + (float)i / ((float)orderFans.Count - 1.0f) * distance);
             }
             Canvas.Refresh();
         }
@@ -377,19 +382,19 @@ namespace CanvasDemo.Canvas
         {
             if (SelectedElements.Count <= 1) return;
 
-            var orderFans = SelectedElements.OrderBy(x => x.Rect.Y).ToList();
-            var minTop = orderFans.First().Rect.Y;
-            var maxTop = orderFans.Last().Rect.Y;
+            var orderFans = SelectedElements.OrderBy(x => x.Rect.Top).ToList();
+            var minTop = orderFans.First().Rect.Top;
+            var maxTop = orderFans.Last().Rect.Top;
             var distance = maxTop - minTop;
 
             for (int i = 0; i < orderFans.Count; i++)
             {
-                orderFans[i].Rect.Y = (int)(minTop + (float)i / ((float)orderFans.Count - 1.0f) * distance);
+                orderFans[i].Rect.Top = (int)(minTop + (float)i / ((float)orderFans.Count - 1.0f) * distance);
             }
             Canvas.Refresh();
         }
 
-        public override void DrawingAfter(Graphics g)
+        public override void DrawingAfter(SKCanvas g)
         {
 
         }

@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
+using SkiaSharp;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using Point = SkiaSharp.SKPoint;
+using Rectangle = SkiaSharp.SKRect;
+using Size = SkiaSharp.SKSize;
+using System.Windows.Input;
+using SkiaSharp.Views.WPF;
 
 namespace CanvasDemo.Canvas
 {
@@ -16,8 +20,8 @@ namespace CanvasDemo.Canvas
             Canvas = canvas;
 
             //默认图纸坐标
-            Zero = new Point(Canvas.Width / 2, Canvas.Height / 2);
-            Viewport = new Rectangle(0 - Zero.X, 0 - Zero.Y, Canvas.Width, Canvas.Height);
+            Zero = new Point((float)(Canvas.Width / 2), (float)(Canvas.Height / 2));
+            Viewport = new Rectangle(0 - Zero.X, 0 - Zero.Y, (float)Canvas.Width, (float)Canvas.Height);
 
         }
 
@@ -51,21 +55,21 @@ namespace CanvasDemo.Canvas
         /// </summary>
         Point OldMousePoint;
 
-        public void MouseDown(MouseEventArgs e)
+        public void MouseDown(MouseButtonEventArgs e)
         {
-            if (e.Button == MouseButtons.Middle) IsMouseMiddleDown = true;
-            OldMousePoint = e.Location;
+            if (e.MiddleButton == MouseButtonState.Pressed) IsMouseMiddleDown = true;
+            OldMousePoint = e.GetPosition(Canvas).ToSKPoint();
         }
 
-        public void MouseUp(MouseEventArgs e)
+        public void MouseUp(MouseButtonEventArgs e)
         {
-            if (e.Button == MouseButtons.Middle) IsMouseMiddleDown = false;
+            if (e.MiddleButton == MouseButtonState.Pressed) IsMouseMiddleDown = false;
         }
 
 
         public void MouseMove(MouseEventArgs e)
         {
-            var newLocation = e.Location;
+            var newLocation = e.GetPosition(Canvas);
 
             if (IsMouseMiddleDown == true)
             {//鼠标中键移动图纸
@@ -73,29 +77,30 @@ namespace CanvasDemo.Canvas
                 var x = (newLocation.X - OldMousePoint.X);
                 var y = (newLocation.Y - OldMousePoint.Y);
 
-                Zero.Offset(x, y);
+                Zero.Offset((float)x, (float)y);
 
-                Viewport.X = (int)((0 - Zero.X) / Zoom);
-                Viewport.Y = (int)((0 - Zero.Y) / Zoom);
+                Viewport.Location = new Point(((0 - Zero.X) / Zoom), ((0 - Zero.Y) / Zoom));
+
             }
 
-            OldMousePoint = newLocation;
+            OldMousePoint = newLocation.ToSKPoint();
         }
 
-        public void MouseWheel(MouseEventArgs e)
+        public void MouseWheel(MouseWheelEventArgs e)
         {
             //鼠标滚轮滚动图纸
-            int tZeroX = 0;
-            int tZeroY = 0;
-            if (e.Delta > 0)
+            var tZeroX = 0f;
+            var tZeroY = 0f;
+            var location = e.GetPosition(Canvas);
+            if (e. Delta > 0)
             {
                 if (Zoom == MaxZoom) return;
 
                 Zoom = Zoom * 1.25f;
                 if (Zoom > MaxZoom) Zoom = MaxZoom;
 
-                tZeroX = (int)((e.X - Zero.X) - (e.X - Zero.X) * 1.25f);
-                tZeroY = (int)((e.Y - Zero.Y) - (e.Y - Zero.Y) * 1.25f);
+                tZeroX = (int)((location.X - Zero.X) - (location.X - Zero.X) * 1.25f);
+                tZeroY = (int)((location.Y - Zero.Y) - (location.Y - Zero.Y) * 1.25f);
             }
             else
             {
@@ -104,18 +109,17 @@ namespace CanvasDemo.Canvas
                 Zoom = Zoom * 0.8f;
                 if (Zoom < MinZoom) Zoom = MinZoom;
 
-                tZeroX = (int)((e.X - Zero.X) - (e.X - Zero.X) * 0.8f);
-                tZeroY = (int)((e.Y - Zero.Y) - (e.Y - Zero.Y) * 0.8f);
+                tZeroX = ((float)((location.X - Zero.X) - (location.X - Zero.X) * 0.8f));
+                tZeroY = ((float)((location.Y - Zero.Y) - (location.Y - Zero.Y) * 0.8f));
             }
 
             //调整相对坐标位置
             Zero.Offset(tZeroX, tZeroY);
 
             //调整视口位置
-            Viewport.X = (int)((0 - Zero.X) / Zoom);
-            Viewport.Y = (int)((0 - Zero.Y) / Zoom);
-            Viewport.Width = (int)((Canvas.Width) / Zoom);
-            Viewport.Height = (int)((Canvas.Height) / Zoom);
+            Viewport.Location = new Point((0 - Zero.X) / Zoom, (0 - Zero.Y) / Zoom);
+            Viewport.Size = new Size((float)((Canvas.Width) / Zoom), (float)((Canvas.Height) / Zoom));
+           
         }
 
         /// <summary>
@@ -125,22 +129,22 @@ namespace CanvasDemo.Canvas
         public void SetZoom(float zoom)
         {
             Zoom = zoom;
-            Canvas.Refresh();
+            //Canvas.Refresh();
+            Canvas.InvalidateVisual();
         }
-        public void SetZero(int x,int y)
+        public void SetZero(float x,float y)
         {
             Zero.X = x;
             Zero.Y = y;
             //调整视口位置
-            Viewport.X = (int)((0 - Zero.X) / Zoom);
-            Viewport.Y = (int)((0 - Zero.Y) / Zoom);
+            Viewport.Location = new Point(((0 - Zero.X) / Zoom), ((0 - Zero.Y) / Zoom));
         }
 
 
-            /// <summary>
-            /// 设置成完整显示
-            /// </summary>
-            public void SetFullDisplay()
+        /// <summary>
+        /// 设置成完整显示
+        /// </summary>
+        public void SetFullDisplay()
         {
             var w = (float)Canvas.Width / (float)Canvas.BackgrounderSize.Width;
             var h = (float)Canvas.Height / (float)Canvas.BackgrounderSize.Height;
@@ -148,15 +152,12 @@ namespace CanvasDemo.Canvas
             MinZoom = Zoom;
             MaxZoom = Zoom * 100;
 
-            Zero.X = Canvas.Width / 2;
-            Zero.Y = Canvas.Height / 2;
+            Zero.X =(float)Canvas.Width / 2;
+            Zero.Y = (float)Canvas.Height / 2;
 
-            Viewport.X = (int)((0 - Zero.X) / Zoom);
-            Viewport.Y = (int)((0 - Zero.Y) / Zoom);
-            Viewport.Width = (int)(Canvas.Width / Zoom);
-            Viewport.Height = (int)(Canvas.Height / Zoom);
-
-            Canvas.Refresh();
+            Viewport.Location = new Point(((0 - Zero.X) / Zoom), ((0 - Zero.Y) / Zoom));
+            Viewport.Size = new Size((float)(Canvas.Width / Zoom), (float)(Canvas.Height / Zoom));
+            Canvas.InvalidateVisual();
         }
 
         #endregion
@@ -188,41 +189,43 @@ namespace CanvasDemo.Canvas
         public Rectangle LocalToShow(Rectangle rect)
         {
             //要清晰的确定本地和世界的关系
-            var r = new Rectangle(rect.Location, rect.Size);
+            //var r = new Rectangle(rect.Location, rect.Size);
 
             //计算缩放坐标
-            r.X = (int)(r.X * Zoom) + Zero.X;
-            r.Y = (int)(r.Y * Zoom) + Zero.Y;
+            //r.X = (int)(r.X * Zoom) + Zero.X;
+            var X = (rect.Left * Zoom) + Zero.X;
+            //r.Y = (int)(r.Y * Zoom) + Zero.Y;
+            var Y = (rect.Top * Zoom) + Zero.Y;
 
             //调整矩形大小
-            r.Width = (int)Math.Round(rect.Width * Zoom, 0);
-            r.Height = (int)Math.Round(rect.Height * Zoom, 0);
+            var Width = Math.Round(rect.Width * Zoom, 0);
+            var Height = Math.Round(rect.Height * Zoom, 0);
 
-            return r;
+            return Rectangle.Create(X, Y, (float)Width, (float)Height);
         }
 
         public Point LocalToShow(Point point)
         {
-            return new Point((int)(point.X * Zoom) + Zero.X, (int)(point.Y * Zoom) + Zero.Y);
+            return new Point((point.X * Zoom) + Zero.X, (point.Y * Zoom) + Zero.Y);
         }
 
-        public Rectangle LocalToShow(int x, int y, int width, int height)
+        public Rectangle LocalToShow(float x, float y, float width, float height)
         {
             return new Rectangle(
-                (int)(x * Zoom) + Zero.X,
-                (int)(y * Zoom) + Zero.Y,
-                (int)Math.Round(width * Zoom, 0),
-                (int)Math.Round(height * Zoom, 0)
+                (x * Zoom) + Zero.X,
+                (y * Zoom) + Zero.Y,
+                (float)Math.Round(width * Zoom, 0),
+                (float)Math.Round(height * Zoom, 0)
              );
         }
 
-        public int ToShowX(int x)
+        public float ToShowX(float x)
         {
-            return (int)(x * Zoom) + Zero.X;
+            return (x * Zoom + Zero.X);
         }
-        public int ToShowY(int y)
+        public float ToShowY(float y)
         {
-            return (int)(y * Zoom) + Zero.Y;
+            return (y * Zoom + Zero.Y);
         }
 
         /// <summary>
@@ -232,7 +235,7 @@ namespace CanvasDemo.Canvas
         /// <returns></returns>
         public Size LocalToShow(Size size)
         {
-            return new Size((int)Math.Round(size.Width * Zoom, 0), (int)Math.Round(size.Height * Zoom, 0));
+            return new Size((float)Math.Round(size.Width * Zoom, 0), (float)Math.Round(size.Height * Zoom, 0));
         }
 
         /// <summary>
@@ -242,7 +245,7 @@ namespace CanvasDemo.Canvas
         /// <returns></returns>
         public Point MousePointToLocal(Point point)
         {
-            return new Point((int)Math.Round((point.X - Zero.X) / Zoom, 0), (int)Math.Round((point.Y - Zero.Y) / Zoom, 0));
+            return new Point((float)Math.Round((point.X - Zero.X) / Zoom, 0), (float)Math.Round((point.Y - Zero.Y) / Zoom, 0));
         }
 
         #endregion

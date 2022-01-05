@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
+﻿using SkiaSharp;
+using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Point = SkiaSharp.SKPoint;
+using Rectangle = SkiaSharp.SKRect;
+using Size = SkiaSharp.SKSize;
 namespace CanvasDemo.Canvas
 {
 
@@ -20,12 +21,12 @@ namespace CanvasDemo.Canvas
         /// 正常绘图
         /// </summary>
         /// <param name="g"></param>
-        public abstract void Drawing(Graphics g);
+        public abstract void Drawing(SKCanvas g);
 
         /// <summary>
         /// 第二次绘制，用于显示一些在前端的文字等
         /// </summary>
-        public abstract void DrawingAfter(Graphics g);
+        public abstract void DrawingAfter(SKCanvas g);
 
         /// <summary>
         /// 画布

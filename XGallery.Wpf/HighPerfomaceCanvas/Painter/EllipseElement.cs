@@ -1,14 +1,14 @@
 ﻿using CanvasDemo.Canvas;
 using CanvasDemo.Data;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace CanvasDemo.Painter
 {
@@ -16,18 +16,17 @@ namespace CanvasDemo.Painter
     {
         public EllipseElement(EllipseLayer layer, ElementData data, int sideLength) : base(layer, data)
         {
-            this.Rect.Width = sideLength;
-            this.Rect.Height = sideLength;
+            this.Rect.Size =new SKSize( sideLength,sideLength);
         }
 
-        public static Brush FillBrush = new SolidBrush(Color.Green);
+        public static SKPaint FillBrush = new SKPaint() {Color= SKColors.Green };
 
-        public override void Drawing(Graphics g)
+        public override void Drawing(SKCanvas g)
         {
-            g.FillEllipse(FillBrush, Viewer.LocalToShow(Rect));
+            g.DrawOval( Viewer.LocalToShow(Rect), FillBrush);
         }
 
-        public override void DrawingAfter(Graphics g)
+        public override void DrawingAfter(SKCanvas g)
         {
 
         }

@@ -1,10 +1,13 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Xamarin.Helper.Views;
+using Point = SkiaSharp.SKPoint;
+using Rectangle = SkiaSharp.SKRect;
+using Size = SkiaSharp.SKSize;
 namespace CanvasDemo.Canvas
 {
     /// <summary>
@@ -79,16 +82,23 @@ namespace CanvasDemo.Canvas
         protected virtual void UnCurrentEvent() { }
 
 
-        public int JoystickSize { get { return (Rect.Width + Rect.Height) / 20 + 1; } }
+        public int JoystickSize { get { return (int)((Rect.Width + Rect.Height) / 20 + 1); } }
 
-        static Brush JoystickCurrent = new SolidBrush(Color.FromArgb(230, 255, 255, 255));
-        static Brush JoystickSelect = new SolidBrush(Color.FromArgb(230, 50, 50, 50));
-
+        static SKPaint JoystickCurrent = new SKPaint()
+        {
+            Style = SKPaintStyle.Fill,
+            Color = SKColor.Parse($"{255:X2}{255:X2}{255:X2}").WithAlpha(230),
+        };
+        static SKPaint JoystickSelect = new SKPaint()
+        {
+            Style = SKPaintStyle.Fill,
+            Color = SKColor.Parse($"{50:X2}{50:X2}{50:X2}").WithAlpha(230),
+        };
         /// <summary>
         /// 绘制八个操纵柄
         /// </summary>
         /// <param name="painter"></param>
-        public void DrawingJoystick(Graphics g)
+        public void DrawingJoystick(SKCanvas g)
         {
             if (IsSelected == false) return;
 
@@ -97,35 +107,36 @@ namespace CanvasDemo.Canvas
             var s = JoystickSize;
             if (IsCurrent == false)
             {
-                g.FillRectangle(JoystickSelect, Viewer.LocalToShow(Rect.X, Rect.Y + (0), s, s));
-                g.FillRectangle(JoystickSelect, Viewer.LocalToShow(Rect.X + (cX - s / 2), Rect.Y + (0), s, s));
-                g.FillRectangle(JoystickSelect, Viewer.LocalToShow(Rect.X + (Rect.Width - s), Rect.Y + (0), s, s));
-                g.FillRectangle(JoystickSelect, Viewer.LocalToShow(Rect.X + (Rect.Width - s), Rect.Y + (cY - s / 2), s, s));
-                g.FillRectangle(JoystickSelect, Viewer.LocalToShow(Rect.X + (Rect.Width - s), Rect.Y + (Rect.Height - s), s, s));
-                g.FillRectangle(JoystickSelect, Viewer.LocalToShow(Rect.X + (cX - s / 2), Rect.Y + (Rect.Height - s), s, s));
-                g.FillRectangle(JoystickSelect, Viewer.LocalToShow(Rect.X + (0), Rect.Y + (Rect.Height - s), s, s));
-                g.FillRectangle(JoystickSelect, Viewer.LocalToShow(Rect.X + (0), Rect.Y + (cY - s / 2), s, s));
+                g.DrawRect( Viewer.LocalToShow(Rect.Left, Rect.Top + (0), s, s), JoystickSelect);
+                g.DrawRect( Viewer.LocalToShow(Rect.Left + (cX - s / 2), Rect.Top + (0), s, s),JoystickSelect);
+                g.DrawRect(Viewer.LocalToShow(Rect.Left + (Rect.Width - s), Rect.Top + (0), s, s),JoystickSelect);
+                g.DrawRect( Viewer.LocalToShow(Rect.Left + (Rect.Width - s), Rect.Top + (cY - s / 2), s, s),JoystickSelect);
+                g.DrawRect(Viewer.LocalToShow(Rect.Left + (Rect.Width - s), Rect.Top + (Rect.Height - s), s, s),JoystickSelect);
+                g.DrawRect( Viewer.LocalToShow(Rect.Left + (cX - s / 2), Rect.Top + (Rect.Height - s), s, s),JoystickSelect);
+                g.DrawRect(Viewer.LocalToShow(Rect.Left + (0), Rect.Top + (Rect.Height - s), s, s),JoystickSelect);
+                g.DrawRect( Viewer.LocalToShow(Rect.Left + (0), Rect.Top + (cY - s / 2), s, s),JoystickSelect);
             }
             else if (IsCurrent == true)
             {
-                g.FillRectangle(JoystickCurrent, Viewer.LocalToShow(Rect.X, Rect.Y + (0), s, s));
-                g.FillRectangle(JoystickCurrent, Viewer.LocalToShow(Rect.X + (cX - s / 2), Rect.Y + (0), s, s));
-                g.FillRectangle(JoystickCurrent, Viewer.LocalToShow(Rect.X + (Rect.Width - s), Rect.Y + (0), s, s));
-                g.FillRectangle(JoystickCurrent, Viewer.LocalToShow(Rect.X + (Rect.Width - s), Rect.Y + (cY - s / 2), s, s));
-                g.FillRectangle(JoystickCurrent, Viewer.LocalToShow(Rect.X + (Rect.Width - s), Rect.Y + (Rect.Height - s), s, s));
-                g.FillRectangle(JoystickCurrent, Viewer.LocalToShow(Rect.X + (cX - s / 2), Rect.Y + (Rect.Height - s), s, s));
-                g.FillRectangle(JoystickCurrent, Viewer.LocalToShow(Rect.X + (0), Rect.Y + (Rect.Height - s), s, s));
-                g.FillRectangle(JoystickCurrent, Viewer.LocalToShow(Rect.X + (0), Rect.Y + (cY - s / 2), s, s));
-
-                g.DrawRectangle(Pens.Black, Viewer.LocalToShow(Rect.X, Rect.Y + (0), s, s));
-                g.DrawRectangle(Pens.Black, Viewer.LocalToShow(Rect.X + (cX - s / 2), Rect.Y + (0), s, s));
-                g.DrawRectangle(Pens.Black, Viewer.LocalToShow(Rect.X + (Rect.Width - s), Rect.Y + (0), s, s));
-                g.DrawRectangle(Pens.Black, Viewer.LocalToShow(Rect.X + (Rect.Width - s), Rect.Y + (cY - s / 2), s, s));
-                g.DrawRectangle(Pens.Black, Viewer.LocalToShow(Rect.X + (Rect.Width - s), Rect.Y + (Rect.Height - s), s, s));
-                g.DrawRectangle(Pens.Black, Viewer.LocalToShow(Rect.X + (cX - s / 2), Rect.Y + (Rect.Height - s), s, s));
-                g.DrawRectangle(Pens.Black, Viewer.LocalToShow(Rect.X + (0), Rect.Y + (Rect.Height - s), s, s));
-                g.DrawRectangle(Pens.Black, Viewer.LocalToShow(Rect.X + (0), Rect.Y + (cY - s / 2), s, s));
-
+                g.DrawRect(Viewer.LocalToShow(Rect.Left, Rect.Top + (0), s, s),JoystickCurrent);
+                g.DrawRect(Viewer.LocalToShow(Rect.Left + (cX - s / 2), Rect.Top + (0), s, s),JoystickCurrent);
+                g.DrawRect(Viewer.LocalToShow(Rect.Left + (Rect.Width - s), Rect.Top + (0), s, s),JoystickCurrent);
+                g.DrawRect(Viewer.LocalToShow(Rect.Left + (Rect.Width - s), Rect.Top + (cY - s / 2), s, s),JoystickCurrent);
+                g.DrawRect(Viewer.LocalToShow(Rect.Left + (Rect.Width - s), Rect.Top + (Rect.Height - s), s, s),JoystickCurrent);
+                g.DrawRect(Viewer.LocalToShow(Rect.Left + (cX - s / 2), Rect.Top + (Rect.Height - s), s, s),JoystickCurrent);
+                g.DrawRect(Viewer.LocalToShow(Rect.Left + (0), Rect.Top + (Rect.Height - s), s, s),JoystickCurrent);
+                g.DrawRect(Viewer.LocalToShow(Rect.Left + (0), Rect.Top + (cY - s / 2), s, s), JoystickCurrent);
+                using (var paint = new SKPaint() { Color = SKColors.Black })
+                {
+                    g.DrawRect(Viewer.LocalToShow(Rect.Left, Rect.Top + (0), s, s), paint);
+                    g.DrawRect(Viewer.LocalToShow(Rect.Left + (cX - s / 2), Rect.Top + (0), s, s), paint);
+                    g.DrawRect(Viewer.LocalToShow(Rect.Left + (Rect.Width - s), Rect.Top + (0), s, s),paint);
+                    g.DrawRect(Viewer.LocalToShow(Rect.Left + (Rect.Width - s), Rect.Top + (cY - s / 2), s, s),paint);
+                    g.DrawRect(Viewer.LocalToShow(Rect.Left + (Rect.Width - s), Rect.Top + (Rect.Height - s), s, s),paint);
+                    g.DrawRect(Viewer.LocalToShow(Rect.Left + (cX - s / 2), Rect.Top + (Rect.Height - s), s, s),paint);
+                    g.DrawRect(Viewer.LocalToShow(Rect.Left + (0), Rect.Top + (Rect.Height - s), s, s),paint);
+                    g.DrawRect(Viewer.LocalToShow(Rect.Left + (0), Rect.Top + (cY - s / 2), s, s),paint);
+                }
             }
         }
 
